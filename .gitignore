@@ -36,5 +36,18 @@ Thumbs.db
 htmlcov/
 .pytest_cache/
 
+# Database
+*.db
+
+# Screenshots
+*.png
+*.jpeg
+
+# Claude Code
+.claude/
+
+# Environment overrides
+.env.local
+
 # Misc
 *.log

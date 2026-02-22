@@ -13,9 +13,16 @@ from app.api.leads import router as leads_router
 
 app = FastAPI(title="PropertyFlow API", version="0.1.0")
 
+cors_origins = [settings.FRONTEND_URL]
+if settings.FRONTEND_URL not in ("http://localhost:3000", "http://localhost:3001"):
+    cors_origins.extend(["http://localhost:3000", "http://localhost:3001"])
+else:
+    # In dev, allow both common ports
+    cors_origins = ["http://localhost:3000", "http://localhost:3001"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.FRONTEND_URL],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
