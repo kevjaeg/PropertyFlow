@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.api.auth import router as auth_router
+from app.api.agents import router as agents_router
 
 app = FastAPI(title="PropertyFlow API", version="0.1.0")
 
@@ -15,6 +16,7 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+app.include_router(agents_router)
 
 @app.get("/health")
 def health_check():
