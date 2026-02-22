@@ -52,17 +52,24 @@ function formatNumber(n: number): string {
   return new Intl.NumberFormat("en-US").format(n);
 }
 
+const FREE_TIER_LIMIT = 5;
+
 export default function ListingsPage() {
   const router = useRouter();
   const [listings, setListings] = useState<Listing[]>([]);
+  const [allListings, setAllListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<FilterTab>("active");
 
   const fetchListings = useCallback(async () => {
     try {
       const params = activeTab === "all" ? "" : `?status=${activeTab}`;
-      const data = await api.fetch(`/listings${params}`);
-      setListings(data);
+      const [filtered, all] = await Promise.all([
+        api.fetch(`/listings${params}`),
+        api.fetch("/listings"),
+      ]);
+      setListings(filtered);
+      setAllListings(all);
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : "Failed to load listings"
@@ -72,6 +79,9 @@ export default function ListingsPage() {
     }
   }, [activeTab]);
 
+  const activeCount = allListings.filter((l) => l.status === "active").length;
+  const atLimit = activeCount >= FREE_TIER_LIMIT;
+
   useEffect(() => {
     setLoading(true);
     fetchListings();
@@ -79,6 +89,12 @@ export default function ListingsPage() {
 
   const handleToggleStatus = async (listing: Listing) => {
     const newStatus = listing.status === "active" ? "archived" : "active";
+    if (newStatus === "active" && atLimit) {
+      toast.error(
+        "You've reached the free tier limit of 5 active listings. Archive another listing first."
+      );
+      return;
+    }
     try {
       await api.patch(`/listings/${listing.id}/status`, { status: newStatus });
       toast.success(
@@ -190,12 +206,31 @@ export default function ListingsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">Listings</h1>
-        <Button asChild>
-          <Link href="/dashboard/listings/new">
-            <Plus className="size-4" />
-            New Listing
-          </Link>
-        </Button>
+        <div className="flex items-center gap-3">
+          <Badge variant="secondary" className="text-sm">
+            {activeCount}/{FREE_TIER_LIMIT} active
+          </Badge>
+          {atLimit ? (
+            <Button
+              variant="outline"
+              onClick={() =>
+                toast.info(
+                  "You've reached the free tier limit of 5 active listings. Archive a listing to create a new one, or upgrade to Pro for unlimited listings."
+                )
+              }
+            >
+              <Plus className="size-4" />
+              New Listing
+            </Button>
+          ) : (
+            <Button asChild>
+              <Link href="/dashboard/listings/new">
+                <Plus className="size-4" />
+                New Listing
+              </Link>
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Filter tabs */}
