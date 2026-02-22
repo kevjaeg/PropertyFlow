@@ -9,6 +9,7 @@ from app.api.photos import router as photos_router
 from app.api.videos import router as videos_router
 from app.api.webhooks import router as webhooks_router
 from app.api.public import router as public_router
+from app.api.leads import router as leads_router
 
 app = FastAPI(title="PropertyFlow API", version="0.1.0")
 
@@ -27,6 +28,7 @@ app.include_router(photos_router)
 app.include_router(videos_router)
 app.include_router(webhooks_router)
 app.include_router(public_router)
+app.include_router(leads_router)
 
 @app.get("/health")
 def health_check():
