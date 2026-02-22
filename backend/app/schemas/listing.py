@@ -40,5 +40,31 @@ class ListingResponse(BaseModel):
     status: str
     branded_url: str
     unbranded_url: str
+    agent_name: str | None = None
+    first_photo_url: str | None = None
 
     model_config = {"from_attributes": True}
+
+
+class PhotoInListing(BaseModel):
+    id: str
+    url: str
+    thumbnail_url: str
+    position: int
+
+    model_config = {"from_attributes": True}
+
+
+class VideoInListing(BaseModel):
+    id: str
+    mux_asset_id: str | None
+    mux_playback_id: str | None
+    title: str | None
+    status: str
+
+    model_config = {"from_attributes": True}
+
+
+class ListingDetailResponse(ListingResponse):
+    photos: list[PhotoInListing] = []
+    videos: list[VideoInListing] = []

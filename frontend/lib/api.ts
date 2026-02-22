@@ -34,6 +34,8 @@ class ApiClient {
         .catch(() => ({ detail: "Request failed" }));
       throw new Error(error.detail || "Request failed");
     }
+    // Handle 204 No Content responses
+    if (res.status === 204) return null;
     return res.json();
   }
 
@@ -51,6 +53,35 @@ class ApiClient {
 
   delete(path: string) {
     return this.fetch(path, { method: "DELETE" });
+  }
+
+  getApiUrl() {
+    return API_URL;
+  }
+
+  /**
+   * Upload a file using FormData. Does NOT set Content-Type header so browser
+   * can set it with the correct multipart boundary automatically.
+   */
+  async uploadFile(path: string, file: File) {
+    const formData = new FormData();
+    formData.append("file", file);
+    const token = this.getToken();
+    const headers: Record<string, string> = {};
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+
+    const res = await globalThis.fetch(`${API_URL}${path}`, {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+    if (!res.ok) {
+      const error = await res
+        .json()
+        .catch(() => ({ detail: "Upload failed" }));
+      throw new Error(error.detail || "Upload failed");
+    }
+    return res.json();
   }
 }
 

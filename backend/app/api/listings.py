@@ -11,6 +11,7 @@ from app.schemas.listing import (
     ListingUpdate,
     ListingStatusUpdate,
     ListingResponse,
+    ListingDetailResponse,
 )
 from app.services.slug import get_unique_slug
 
@@ -21,6 +22,12 @@ FREE_TIER_LIMIT = 5
 
 def _listing_to_response(listing: Listing) -> dict:
     """Convert a Listing ORM object to a response dict with computed URLs."""
+    # Get first photo by position for the card thumbnail
+    first_photo = None
+    if listing.photos:
+        sorted_photos = sorted(listing.photos, key=lambda p: p.position)
+        first_photo = sorted_photos[0].thumbnail_url if sorted_photos else None
+
     return {
         "id": listing.id,
         "agent_id": listing.agent_id,
@@ -35,7 +42,35 @@ def _listing_to_response(listing: Listing) -> dict:
         "status": listing.status,
         "branded_url": f"/p/{listing.slug}",
         "unbranded_url": f"/p/{listing.slug}/mls",
+        "agent_name": listing.agent.name if listing.agent else None,
+        "first_photo_url": first_photo,
     }
+
+
+def _listing_to_detail_response(listing: Listing) -> dict:
+    """Convert a Listing ORM object to a detail response dict including photos, videos, and agent name."""
+    data = _listing_to_response(listing)
+    data["photos"] = [
+        {
+            "id": p.id,
+            "url": p.url,
+            "thumbnail_url": p.thumbnail_url,
+            "position": p.position,
+        }
+        for p in sorted(listing.photos, key=lambda p: p.position)
+    ]
+    data["videos"] = [
+        {
+            "id": v.id,
+            "mux_asset_id": v.mux_asset_id,
+            "mux_playback_id": v.mux_playback_id,
+            "title": v.title,
+            "status": v.status,
+        }
+        for v in listing.videos
+    ]
+    data["agent_name"] = listing.agent.name if listing.agent else None
+    return data
 
 
 def _check_free_tier_limit(user: User, db: Session) -> None:
@@ -104,7 +139,7 @@ def create_listing(
     return _listing_to_response(listing)
 
 
-@router.get("/{listing_id}", response_model=ListingResponse)
+@router.get("/{listing_id}", response_model=ListingDetailResponse)
 def get_listing(
     listing_id: str,
     user: User = Depends(get_current_user),
@@ -115,7 +150,7 @@ def get_listing(
     ).first()
     if not listing:
         raise HTTPException(status_code=404, detail="Listing not found")
-    return _listing_to_response(listing)
+    return _listing_to_detail_response(listing)
 
 
 @router.put("/{listing_id}", response_model=ListingResponse)

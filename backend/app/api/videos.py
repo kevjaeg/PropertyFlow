@@ -75,3 +75,26 @@ def get_video_status(
     if not video:
         raise HTTPException(status_code=404, detail="Video not found")
     return video
+
+
+@router.delete("/listings/{listing_id}/videos/{video_id}", status_code=204)
+def delete_video(
+    listing_id: str,
+    video_id: str,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    listing = db.query(Listing).filter(
+        Listing.id == listing_id, Listing.photographer_id == user.id
+    ).first()
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+
+    video = db.query(ListingVideo).filter(
+        ListingVideo.id == video_id, ListingVideo.listing_id == listing_id
+    ).first()
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+
+    db.delete(video)
+    db.commit()
