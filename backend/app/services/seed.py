@@ -11,7 +11,7 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from app.core.database import SessionLocal, Base, engine
+from app.core.database import SessionLocal
 from app.core.auth import hash_password
 from app.models.user import User
 from app.models.agent import Agent
@@ -19,7 +19,6 @@ from app.models.listing import Listing
 
 
 def seed():
-    Base.metadata.create_all(bind=engine)
     db = SessionLocal()
 
     try:
