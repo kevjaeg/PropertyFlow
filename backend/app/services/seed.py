@@ -17,6 +17,8 @@ from app.models.user import User
 from app.models.agent import Agent
 from app.models.listing import Listing
 from app.models.photo import ListingPhoto
+from app.models.lead import Lead
+from app.models.video import ListingVideo
 
 
 def unsplash(photo_id: str, width: int = 1200) -> str:
@@ -71,8 +73,16 @@ def seed(reset: bool = False):
         if existing:
             if reset:
                 print("Resetting demo data...")
-                db.delete(existing)  # Cascades to agents, listings, photos, leads
+                # Delete in FK order to avoid constraint issues on PostgreSQL
+                for listing in db.query(Listing).filter(Listing.photographer_id == existing.id).all():
+                    db.query(Lead).filter(Lead.listing_id == listing.id).delete()
+                    db.query(ListingPhoto).filter(ListingPhoto.listing_id == listing.id).delete()
+                    db.query(ListingVideo).filter(ListingVideo.listing_id == listing.id).delete()
+                db.query(Listing).filter(Listing.photographer_id == existing.id).delete()
+                db.query(Agent).filter(Agent.photographer_id == existing.id).delete()
+                db.query(User).filter(User.id == existing.id).delete()
                 db.commit()
+                print("Old demo data deleted.")
             else:
                 print("Demo data already exists. Skipping. (Use --reset to recreate)")
                 return
