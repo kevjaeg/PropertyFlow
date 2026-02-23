@@ -19,7 +19,7 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: FRONTEND_URL
-        value: https://propertyflow.vercel.app
+        value: https://property-flow-nu.vercel.app
       - key: CLOUDFLARE_ACCOUNT_ID
         value: ""
       - key: CLOUDFLARE_API_TOKEN
